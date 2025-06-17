@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thornic AI - The AI for Everyone</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22gray%22/><text x=%2250%22 y=%2255%22 font-size=%2240%22 fill=%22white%22 text-anchor=%22middle%22>T</text></svg>" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+    }
+    .sidebar {
+      width: 140px;
+      background: #f2f2f2;
+      border-right: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      z-index: 2;
+    }
+    .sidebar button {
+      padding: 20px 10px;
+      background: none;
+      border: none;
+      text-align: left;
+      font-weight: bold;
+      cursor: pointer;
+      border-left: 4px solid transparent;
+      transition: 0.3s;
+      font-size: 15px;
+    }
+    .sidebar button:hover {
+      background-color: #e6e6e6;
+    }
+    .sidebar button.active {
+      border-left: 4px solid #4a90e2;
+      background-color: #fff;
+    }
+    .main-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+    }
+    .content-area {
+      flex-grow: 1;
+      display: none;
+      padding: 20px;
+      overflow: hidden;
+    }
+    .content-area.active {
+      display: block;
+    }
+    .tabs {
+      display: flex;
+      background: #f9f9f9;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: bold;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active {
+      border-bottom: 2px solid #4a90e2;
+      background: #fff;
+    }
+    .messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 140px);
+      padding-right: 10px;
+    }
+    .message {
+      margin: 10px 0;
+      opacity: 0;
+      animation: slideIn 0.5s forwards;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+    .message.user {
+      align-self: flex-end;
+      text-align: right;
+      font-weight: bold;
+    }
+    .message.ai {
+      align-self: flex-start;
+      color: #4a90e2;
+    }
+    .input-box {
+      display: flex;
+      padding: 10px;
+    }
+    .input-box input {
+      flex-grow: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      outline: none;
+    }
+    .input-box button {
+      width: 50px;
+      height: 50px;
+      margin-left: 14px;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 14px;
+    }
+    .input-box button:hover {
+      background-color: #357ab7;
+    }
+    #notepad {
+      width: 100%;
+      height: 100vh;
+      font-size: 16px;
+      padding: 20px;
+      font-family: 'Courier New', monospace;
+      border: none;
+      outline: none;
+      resize: none;
+    }
+    @keyframes slideIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <button class="active" data-target="introduction">Introduction</button>
+    <button data-target="home">Home</button>
+    <button data-target="notes">My Notes</button>
+  </div>
+  <div class="main-content">
+    <div id="introduction" class="content-area active">
+      <h2>Welcome to Thornic AI</h2>
+      <p>This is your assistant. Use the Home tab to chat or Notes to write ideas down.</p>
+    </div>
+    <div id="home" class="content-area">
+      <div class="tabs">
+        <div class="tab active">Chat</div>
+        <div class="tab">History</div>
+      </div>
+      <div id="chatTab" class="messages"></div>
+      <div id="historyTab" class="messages" style="display:none;"></div>
+      <div class="input-box">
+        <input type="text" id="userInput" placeholder="Ask Thornic AI" />
+        <button id="sendBtn">SEND</button>
+      </div>
+    </div>
+    <div id="notes" class="content-area">
+      <textarea id="notepad" placeholder="Looks a bit quiet here"></textarea>
+    </div>
+  </div>
+
+  <script>
+    const sidebarButtons = document.querySelectorAll(".sidebar button");
+    const contentAreas = document.querySelectorAll(".content-area");
+
+    sidebarButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        sidebarButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        contentAreas.forEach(c => c.classList.remove("active"));
+        const target = document.getElementById(btn.dataset.target);
+        if (target) target.classList.add("active");
+      });
+    });
+
+    const tabs = document.querySelectorAll(".tab");
+    const chatTab = document.getElementById("chatTab");
+    const historyTab = document.getElementById("historyTab");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        if (tab.textContent === "Chat") {
+          chatTab.style.display = "flex";
+          historyTab.style.display = "none";
+        } else {
+          chatTab.style.display = "none";
+          historyTab.style.display = "flex";
+        }
+      });
+    });
+
+    const blockedSwears = ["fuck", "shit", "bitch", "asshole", "cunt", "dick", "bastard", "slut", "sex", "whore"];
+    const unethicalWords = ["hack", "steal", "attack", "ddos", "malware", "unethical", "dox", "doxx", "bypass", "illegal", "illegit", "crack", "exploit", "pirate", "phishing"];
+    const predefinedResponses = {
+      "hello": "Hi there! How can I help you today?",
+      "hi": "Hello! How can I assist you?",
+      "how are": "I'm doing great, thank you for asking!",
+      "bye": "Goodbye! Have a great day!",
+      "name": "I'm Thornic AI, your friendly assistant.",
+      "who": "I'm Thornic AI, a chatbot created to help you.",
+      "help": "I can assist with chatting and note-taking. Just ask!"
+    };
+
+    function displayMessage(msg, sender, save = true) {
+      const container = document.createElement("div");
+      container.classList.add("message", sender);
+      container.textContent = msg;
+      chatTab.appendChild(container);
+      chatTab.scrollTop = chatTab.scrollHeight;
+      if (save) {
+        const clone = container.cloneNode(true);
+        historyTab.appendChild(clone);
+      }
+    }
+
+    function getAIResponse(input) {
+      const lower = input.toLowerCase();
+      if (blockedSwears.some(word => lower.includes(word))) {
+        return "I'm sorry, but I can't assist with that language.";
+      }
+      if (unethicalWords.some(word => lower.includes(word))) {
+        return "Sorry, I can't help with that request.";
+      }
+      for (let key in predefinedResponses) {
+        if (lower.includes(key)) return predefinedResponses[key];
+      }
+      return "I'm not sure how to respond to that. Can you clarify?";
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("userInput");
+      const userText = input.value.trim();
+      if (!userText) return;
+      displayMessage(userText, "user");
+      const response = getAIResponse(userText);
+      setTimeout(() => displayMessage(response, "ai"), 500);
+      input.value = "";
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("userInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    document.addEventListener("keydown", e => {
+      const i = [...sidebarButtons].findIndex(b => b.classList.contains("active"));
+      if (e.key === "ArrowDown") sidebarButtons[(i + 1) % sidebarButtons.length].click();
+      else if (e.key === "ArrowUp") sidebarButtons[(i - 1 + sidebarButtons.length) % sidebarButtons.length].click();
+    });
+
+    window.onload = () => {
+      displayMessage("Hello! I'm Thornic AI. Type '/help' to get started.", "ai", false);
+    };
+  </script>
+</body>
+</html>
